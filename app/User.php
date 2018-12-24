@@ -33,8 +33,20 @@ class User extends Authenticatable
         'password', 'remember_token',
     ];
 
+    /**
+     * @return string
+     */
     public function avatar()
     {
         return 'https://www.gravatar.com/avatar/' . md5($this->email) . '?s=45&d=mm';
+    }
+
+    /**
+     * @param Topic $topic
+     * @return bool
+     */
+    public function ownsTopic(Topic $topic)
+    {
+        return $this->id === $topic->user->id;
     }
 }

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreTopicRequest;
+use App\Http\Requests\UpdateTopicRequest;
 use App\Post;
 use App\Topic;
 use App\Transformers\TopicTransformer;
 use Illuminate\Http\Request;
+use League\Fractal\Pagination\IlluminatePaginatorAdapter;
 
 /**
  * Class TopicController
@@ -14,6 +16,34 @@ use Illuminate\Http\Request;
  */
 class TopicController extends Controller
 {
+    /**
+     * @return \Spatie\Fractal\Fractal
+     */
+    public function index()
+    {
+        $topics = Topic::latestFirst()->paginate(10);
+        $topicsCollection = $topics->getCollection();
+
+        return fractal()
+            ->collection($topicsCollection)
+            ->parseIncludes(['user'])
+            ->transformWith(new TopicTransformer)
+            ->paginateWith(new IlluminatePaginatorAdapter($topics))
+            ->toArray();
+    }
+
+    /**
+     * @param Topic $topic
+     * @return mixed
+     */
+    public function show(Topic $topic)
+    {
+        return fractal()
+            ->item($topic)
+            ->parseIncludes(['user', 'posts', 'posts.user'])
+            ->transformWith(new TopicTransformer)
+            ->toArray();
+    }
     /**
      * @param StoreTopicRequest $request
      * @return array
@@ -34,7 +64,26 @@ class TopicController extends Controller
         return fractal()
             ->item($topic)
             ->parseIncludes(['user'])
-            //->parseIncludes(['user', 'posts', 'posts.user'])
+            ->transformWith(new TopicTransformer)
+            ->toArray();
+    }
+
+    /**
+     * @param UpdateTopicRequest $request
+     * @param Topic $topic
+     * @return array
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function update(UpdateTopicRequest $request, Topic $topic)
+    {
+        $this->authorize('update', $topic);
+
+        $topic->title = $request->get('title', $topic->title);
+        $topic->save();
+
+        return fractal()
+            ->item($topic)
+            ->parseIncludes(['user'])
             ->transformWith(new TopicTransformer)
             ->toArray();
     }
