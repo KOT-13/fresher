@@ -87,4 +87,19 @@ class TopicController extends Controller
             ->transformWith(new TopicTransformer)
             ->toArray();
     }
+
+    /**
+     * @param Topic $topic
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws \Exception
+     */
+    public function destroy(Topic $topic)
+    {
+        $this->authorize('destroy', $topic);
+
+        $topic->delete();
+
+        return response(null, 204);
+    }
 }
